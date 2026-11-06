@@ -1,6 +1,5 @@
 #ifndef CRT_BACKTEST_METRICS_MQH
 #define CRT_BACKTEST_METRICS_MQH
-#include "../Core/Config.mqh"
 #include "TradeJournal.mqh"
 
 
@@ -126,6 +125,12 @@ public:
       if(!InpVirtualComparisonEnabled || tick.bid<=0 || tick.ask<=0) return;
       for(int i=0;i<2;i++)
         {
+         if(!m_legs[i].done && !m_legs[i].offered && m_legs[i].signal.id!="" &&
+            tick.time>=m_legs[i].signal.expires_at)
+           {
+            m_legs[i].done=true;
+            Write(i,"EXPIRED","Waiting entry conditions expired without an eligible plan");
+           }
          if(m_legs[i].done || !m_legs[i].offered) continue;
          const bool buy=m_legs[i].plan.direction==DIR_BUY;
          if(m_legs[i].pending)
@@ -180,7 +185,14 @@ public:
      }
    bool Busy()
      {
-      for(int i=0;i<2;i++) if(m_legs[i].pending || m_legs[i].open) return true;
+      if(!InpVirtualComparisonEnabled) return false;
+      const datetime now=TimeCurrent();
+      for(int i=0;i<2;i++)
+        {
+         if(m_legs[i].pending || m_legs[i].open) return true;
+         if(m_legs[i].signal.id!="" && !m_legs[i].done && !m_legs[i].offered &&
+            now<m_legs[i].signal.expires_at) return true;
+        }
       return false;
      }
    int Closed(const EEntryMode mode) { return m_closed[mode==ENTRY_AGGRESSIVE?0:1]; }

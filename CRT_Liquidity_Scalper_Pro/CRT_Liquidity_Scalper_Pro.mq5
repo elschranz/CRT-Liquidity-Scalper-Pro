@@ -91,7 +91,7 @@ bool BaseGates(const MqlTick &tick,string &reason) {
     !AccountInfoInteger(ACCOUNT_TRADE_ALLOWED) || !AccountInfoInteger(ACCOUNT_TRADE_EXPERT)) {
   reason="Trading permission disabled"; return false;
  }
- if(tick.time<=0 || CRTNow()-tick.time>10) { reason="Stale execution tick"; return false; }
+ if(tick.time<=0 || CRTNow()-tick.time>InpMaximumQuoteAgeSeconds) { reason="Stale execution tick"; return false; }
  if(!g_spread.Allowed(tick,reason) || !g_volatility.Allowed(g_atr.Pips(),reason) ||
     !g_hours.Allowed(CRTNow(),reason) || !g_news.Allowed(CRTNow(),reason)) return false;
  return true;
@@ -161,7 +161,7 @@ bool SignalValid(SSignal &signal,const MqlTick &tick,string &reason) {
 void CompareMode(SSignal &signal,CM1EntryEngine &engine,EEntryMode mode,const MqlTick &tick) {
  if(!signal.active || signal.consumed) return;
  string reason="";
- if(g_state.Paused() || !g_state.Entries() || !g_spread.Allowed(tick,reason) ||
+ if(g_state.Paused() || !g_state.Entries() || !g_atr_ready || !g_spread.Allowed(tick,reason) ||
     !g_volatility.Allowed(g_atr.Pips(),reason) || !g_hours.Allowed(CRTNow(),reason) ||
     !g_news.Allowed(CRTNow(),reason)) return;
  if(!SignalValid(signal,tick,reason)) { signal.active=false; g_comparison.Reject(signal,mode,reason); return; }
@@ -177,6 +177,10 @@ void CompareMode(SSignal &signal,CM1EntryEngine &engine,EEntryMode mode,const Mq
 void EvaluateEntry(const MqlTick &tick) {
  string reason="";
  if(g_mode==ENTRY_BOTH_COMPARE) {
+  string common_reason="";
+  if(g_state.Paused() || !g_state.Entries() || !g_atr_ready || !g_spread.Allowed(tick,common_reason) ||
+     !g_volatility.Allowed(g_atr.Pips(),common_reason) || !g_hours.Allowed(CRTNow(),common_reason) ||
+     !g_news.Allowed(CRTNow(),common_reason)) g_comparison.Cancel(common_reason=="" ? "Common entry gate":common_reason);
   CompareMode(g_compare_a,g_virtual_a,ENTRY_AGGRESSIVE,tick);
   CompareMode(g_compare_b,g_virtual_b,ENTRY_CONFIRMED,tick);
   g_comparison.Tick(tick);
@@ -240,6 +244,9 @@ void Render() {
  v.sl_pips=g_plan.entry>0 ? CRTPips(CRTSymbol(),MathAbs(g_plan.entry-g_plan.sl)):0; v.rr=g_plan.rr;
  v.trades=r.trades_today; v.losses=r.losses; v.entry_mode=g_mode==ENTRY_BOTH_COMPARE ? g_real_mode:g_mode;
  v.paused=g_state.Paused(); v.entries_enabled=g_state.Entries(); v.risk_locked=r.locked || !r.valid || !g_storage_ok;
+ v.breakdown_session=g_statistics.Breakdown("SESSION"); v.breakdown_mode=g_statistics.Breakdown("MODE");
+ v.breakdown_rr=g_statistics.Breakdown("RR"); v.breakdown_atr=g_statistics.Breakdown("ATR");
+ v.r_samples=stats.r_samples;
  v.comparing=g_mode==ENTRY_BOTH_COMPARE;
  v.virtual_a_closed=g_comparison.Closed(ENTRY_AGGRESSIVE); v.virtual_b_closed=g_comparison.Closed(ENTRY_CONFIRMED);
  v.virtual_a_r=g_comparison.NetR(ENTRY_AGGRESSIVE); v.virtual_b_r=g_comparison.NetR(ENTRY_CONFIRMED);

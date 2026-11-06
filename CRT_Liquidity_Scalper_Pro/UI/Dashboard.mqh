@@ -12,7 +12,7 @@ class CDashboard
   {
 private:
    string m_prefix;
-   int m_x,m_y,m_width,m_tab,m_chart_width,m_chart_height;
+   int m_x,m_y,m_width,m_tab,m_chart_width,m_chart_height,m_breakdown;
    bool m_minimized,m_auto_minimized,m_initialized,m_have_view;
    SDashboardView m_view;
    CDashboardConfirmation m_confirm;
@@ -120,8 +120,19 @@ private:
         {
          Detail(0,"Reales "+IntegerToString(m_view.closed_trades)+" | WR "+
                    DoubleToString(m_view.winrate,1)+"% | Neto "+DoubleToString(m_view.net,2));
-         Detail(1,"PF "+DoubleToString(m_view.pf,2)+" | Esperanza "+
-                   DoubleToString(m_view.expectancy_r,2)+"R");
+         string dimensions[4]={"SESSION","MODE","RR","ATR"};
+         string summary=m_breakdown==0 ? m_view.breakdown_session :
+                        (m_breakdown==1 ? m_view.breakdown_mode :
+                        (m_breakdown==2 ? m_view.breakdown_rr:m_view.breakdown_atr));
+         string stats="PF "+(m_view.pf<0 ? "N/A":DoubleToString(m_view.pf,2))+
+                      " | E[R] "+(m_view.r_samples>0 ? DoubleToString(m_view.expectancy_r,2):"N/A")+
+                      " | nR="+IntegerToString(m_view.r_samples);
+         CRTUIHide(N("detail1"));
+         string first=summary; StringReplace(first,"\n"," | ");
+         CRTUIButton(N("breakdown"),dimensions[m_breakdown]+": "+CRTUITrim(first,(m_width-95)/6),
+                     m_x+12,m_y+298,m_width-24,16,CRT_UI_SURFACE,CRT_UI_MUTED,7);
+         ObjectSetString(0,N("breakdown"),OBJPROP_TOOLTIP,stats+"\n"+summary+
+                         "\nClic: SESSION > MODE > RR > ATR. CSV: analytics_breakdown.");
          if(m_view.comparing)
             Detail(2,"A "+IntegerToString(m_view.virtual_a_closed)+"/"+
                       DoubleToString(m_view.virtual_a_r,2)+"R | B "+
@@ -139,6 +150,7 @@ private:
          CRTUIButton(N("risk025"),"0.25%",m_x+12+rw,m_y+297,rw-3,19);
          CRTUIButton(N("risk050"),"0.50%",m_x+12+rw*2,m_y+297,rw-3,19);
         }
+      if(m_tab!=3) CRTUIHide(N("breakdown"));
       if(m_tab!=4)
         {
          CRTUIHide(N("risk010")); CRTUIHide(N("risk025")); CRTUIHide(N("risk050"));
@@ -179,7 +191,7 @@ public:
    CDashboard(void)
      {
       m_x=16; m_y=16; m_width=390; m_tab=0;
-      m_chart_width=0; m_chart_height=0; m_minimized=false; m_auto_minimized=false;
+      m_chart_width=0; m_chart_height=0; m_breakdown=0; m_minimized=false; m_auto_minimized=false;
       m_initialized=false; m_have_view=false; ZeroMemory(m_view);
      }
    bool Init(void)
@@ -240,6 +252,7 @@ public:
          m_x=MathMax(4,m_chart_width-MathMax(300,InpDashboardWidth)-16); m_y=16;
          HideChildren(); Geometry(); SaveLayout(); Render(); return "RESET";
         }
+      if(key=="breakdown") { m_breakdown=(m_breakdown+1)%4; Render(); return ""; }
       if(key=="stats")
         {
          m_tab=(m_tab==3 ? 0 : 3); SaveLayout(); Render(); return "STATS";

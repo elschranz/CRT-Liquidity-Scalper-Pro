@@ -73,7 +73,7 @@ Para cada ejecución conservar: versión de MT5/MetaEditor, hash del commit, bro
 | --- | --- | --- |
 | SL estructural | Extremo M5 más buffer, ATR mayor/menor | Distancia máxima de estructura, ATR mínimo y MinimumSLPips |
 | SL superior al máximo | Estructura exige más que MaximumSLPips | Descartar, nunca cortar SL para hacer caber lote |
-| SL M1 experimental | Pivote M1 confirmado insuficiente o que no invalida M5 | Rechazo cuando incumpla la política estructural |
+| SL M1 experimental | Extremo de rechazo M1 cerrado y ATR; comparar con invalidación M5 | No usar M1 abierta; etiquetar el SL M1 como experimental |
 | SL fijo | Comparar con mismas señales/datos | Cumplir validaciones y registrar modalidad |
 | TP adaptativo | Disponibles 2.99, 3.01, 5.01, 7.01, 9.01 R | Rechazo, 3R, 5R, 7R, 9R respectivamente |
 | Margen de liquidez | Nivel a 10 pips y margen 10% | Objetivo efectivo a 9 pips antes de elegir RR |
@@ -146,3 +146,9 @@ La comparación virtual representa un ledger de precios hacia delante, no el mot
 El DD máximo de Analytics/Statistics corresponde a la curva acumulada de operaciones propias cerradas, en moneda de cuenta. No equivale al DD histórico de equity de toda la cuenta; para este último usar el informe nativo del tester y los snapshots de riesgo en vivo. La esperanza en R usa solo posiciones con riesgo inicial monetario recuperado; mostrar su tamaño de muestra, no extrapolar sobre operaciones sin metadatos.
 
 Registrar resultados observados antes de marcar cualquier escenario como aprobado. No se incluyen métricas de rentabilidad en esta entrega.
+
+## Comprobadores de fuente ejecutados
+
+La integración ejecutó en JavaScript la lógica de `CheckSources.mjs`: guardas, grafo de includes, tipos/inputs y delimitadores, más 14 expresiones de riesgo/noticias y 19 casos extraídos del detector CRT/selector RR. Ver `ExecutedChecks.json`. Es una traducción aritmética/estructural, no compilación ni ejecución MQL5. El comando Node queda listo para repetir localmente.
+
+Validar también CSV de desglose real: SESSION de primera entrada; MODE con metadatos; RR3/5/7/9; ATR<2/2–5/5–10/≥10; UNKNOWN sin mapping; muestras R explícitas. Cambiar grupo mediante la fila clicable de PERFORMANCE y comprobar tooltip/CSV. La cola de cierre de seguridad debe reconciliar residuos, limitarse a tres intentos y bloquear incertidumbre sin identidad de orden; no promete cerrar sin pérdida.

@@ -35,8 +35,9 @@ struct SStatistics {
 };
 struct SDashboardView {
  string state,reason,session,signal,news;
+ string breakdown_session,breakdown_mode,breakdown_rr,breakdown_atr;
  double balance,equity,daily_pnl,daily_dd,weekly_dd,total_dd,risk_percent,spread,atr,sl_pips,rr,winrate,net,pf,expectancy_r;
- int trades,losses,closed_trades,virtual_a_closed,virtual_b_closed;
+ int trades,losses,closed_trades,virtual_a_closed,virtual_b_closed,r_samples;
  double virtual_a_r,virtual_b_r;
  bool comparing;
  EEntryMode entry_mode;
