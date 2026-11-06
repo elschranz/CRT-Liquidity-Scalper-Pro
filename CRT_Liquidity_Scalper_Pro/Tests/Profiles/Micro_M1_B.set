@@ -1,0 +1,13 @@
+; COMPARISON ONLY: native news calendar unavailable in Tester; permissive policy explicit.
+; Load defaults first, then this partial profile. No profitability validated.
+InpBlockWhenCalendarUnavailable=false
+InpNewsFilterEnabled=true
+InpRiskPerTradePercent=0.25
+InpRiskCeilingPercent=0.50
+InpEntryMode=1
+InpRealComparisonMode=0
+InpSLMode=1
+InpDynamicTPEnabled=true
+InpAllowFallbackTarget=false
+InpManagementMode=0
+InpPartialsEnabled=false

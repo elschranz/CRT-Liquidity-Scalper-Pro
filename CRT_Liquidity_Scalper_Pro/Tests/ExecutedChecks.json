@@ -1,0 +1,276 @@
+{
+  "date": "2026-11-06",
+  "native_compilation": {
+    "status": "USER_REPORTED_5_ERRORS_BEFORE_PALETTE_FIX",
+    "errors": 5,
+    "warnings": 0,
+    "diagnostic": "constant expected",
+    "locations": [
+      "DashboardComponents.mqh:44:32",
+      "DashboardComponents.mqh:54:57",
+      "DashboardComponents.mqh:55:33",
+      "Dashboard.mqh:47:43",
+      "Dashboard.mqh:55:65"
+    ],
+    "fix": "Palette const color variables replaced by literal preprocessor definitions in DashboardTheme.mqh",
+    "native_recompile_after_fix": "NOT_RUN"
+  },
+  "native_smoke": {
+    "status": "NOT_RUN"
+  },
+  "strategy_tester": {
+    "status": "NOT_RUN"
+  },
+  "broker_demo_and_visual_ui": {
+    "status": "NOT_RUN"
+  },
+  "javascript_execution": {
+    "runtime": "functions.exec V8 and GitHub Actions Node CLI. Source structure and extracted-expression checks.",
+    "structure": {
+      "sources": 39,
+      "inputs": 104,
+      "types": 50,
+      "findings": [],
+      "pass": true
+    },
+    "risk": [
+      {
+        "name": "no drawdown",
+        "actual": 0,
+        "expected": 0,
+        "pass": true
+      },
+      {
+        "name": "daily .75% boundary",
+        "actual": 0.75,
+        "expected": 0.75,
+        "pass": true
+      },
+      {
+        "name": "gain clamps DD",
+        "actual": 0,
+        "expected": 0,
+        "pass": true
+      },
+      {
+        "name": "missing reference fail closed",
+        "actual": 100,
+        "expected": 100,
+        "pass": true
+      },
+      {
+        "name": "daily headroom at start",
+        "actual": 75,
+        "expected": 75,
+        "pass": true
+      },
+      {
+        "name": "daily headroom exhausted",
+        "actual": 0,
+        "expected": 0,
+        "pass": true
+      },
+      {
+        "name": "deposit neutral DD",
+        "actual": 0,
+        "expected": 0,
+        "pass": true
+      },
+      {
+        "name": "withdrawal neutral DD",
+        "actual": 0,
+        "expected": 0,
+        "pass": true
+      },
+      {
+        "name": "total trailing headroom",
+        "actual": 340,
+        "expected": 340,
+        "pass": true
+      },
+      {
+        "name": "news before boundary",
+        "actual": false,
+        "expected": false,
+        "pass": true
+      },
+      {
+        "name": "news starts inclusive",
+        "actual": true,
+        "expected": true,
+        "pass": true
+      },
+      {
+        "name": "news release",
+        "actual": true,
+        "expected": true,
+        "pass": true
+      },
+      {
+        "name": "news ends inclusive",
+        "actual": true,
+        "expected": true,
+        "pass": true
+      },
+      {
+        "name": "news outside end",
+        "actual": false,
+        "expected": false,
+        "pass": true
+      }
+    ],
+    "strategy": [
+      {
+        "name": "CRT buy",
+        "actual": true,
+        "expected": true,
+        "direction": 1,
+        "pass": true
+      },
+      {
+        "name": "CRT sell",
+        "actual": true,
+        "expected": true,
+        "direction": -1,
+        "pass": true
+      },
+      {
+        "name": "double sweep",
+        "actual": false,
+        "expected": false,
+        "direction": 0,
+        "pass": true
+      },
+      {
+        "name": "close on boundary",
+        "actual": false,
+        "expected": false,
+        "direction": 0,
+        "pass": true
+      },
+      {
+        "name": "close outside range",
+        "actual": false,
+        "expected": false,
+        "direction": 0,
+        "pass": true
+      },
+      {
+        "name": "insufficient sweep",
+        "actual": false,
+        "expected": false,
+        "direction": 0,
+        "pass": true
+      },
+      {
+        "name": "insufficient wick",
+        "actual": false,
+        "expected": false,
+        "direction": 0,
+        "pass": true
+      },
+      {
+        "name": "degenerate reference",
+        "actual": false,
+        "expected": false,
+        "direction": 0,
+        "pass": true
+      },
+      {
+        "name": "nonconsecutive bars",
+        "actual": false,
+        "expected": false,
+        "direction": 0,
+        "pass": true
+      },
+      {
+        "name": "nonfinite OHLC",
+        "actual": false,
+        "expected": false,
+        "direction": 0,
+        "pass": true
+      },
+      {
+        "name": "RR available 2.99",
+        "actual": 0,
+        "expected": 0,
+        "pass": true
+      },
+      {
+        "name": "RR available 3",
+        "actual": 3,
+        "expected": 3,
+        "pass": true
+      },
+      {
+        "name": "RR available 4.99",
+        "actual": 3,
+        "expected": 3,
+        "pass": true
+      },
+      {
+        "name": "RR available 5",
+        "actual": 5,
+        "expected": 5,
+        "pass": true
+      },
+      {
+        "name": "RR available 6.99",
+        "actual": 5,
+        "expected": 5,
+        "pass": true
+      },
+      {
+        "name": "RR available 7",
+        "actual": 7,
+        "expected": 7,
+        "pass": true
+      },
+      {
+        "name": "RR available 8.99",
+        "actual": 7,
+        "expected": 7,
+        "pass": true
+      },
+      {
+        "name": "RR available 9",
+        "actual": 9,
+        "expected": 9,
+        "pass": true
+      },
+      {
+        "name": "RR available 12",
+        "actual": 9,
+        "expected": 9,
+        "pass": true
+      }
+    ],
+    "total_expression_cases": 33,
+    "passed_expression_cases": 33
+  },
+  "limitations": [
+    "Source checks and translated expressions do not validate native MQL types, MT5 APIs, event ordering, graphics, broker execution, economic calendar or profitability.",
+    "See CompilationLog.md and TestPlan.md for required native validation."
+  ],
+  "github_actions": {
+    "status": "SUCCESS",
+    "run_id": 42238852416,
+    "job_id": 127963537457,
+    "verified_source_commit": "ec1fc22a9eb827a22fb2202af291ae598427465f",
+    "url": "https://github.com/elschranz/CRT-Liquidity-Scalper-Pro/actions/runs/42238852416",
+    "command": "node CRT_Liquidity_Scalper_Pro/Tests/CheckSources.mjs",
+    "check_step_conclusion": "success",
+    "scope": "39 MQL sources,104 inputs,50 types and33 extracted-expression cases. No native MQL compiler or MT5 runtime."
+  },
+  "palette_fix_checks": {
+    "local_node_cli": "SUCCESS",
+    "command": "node CRT_Liquidity_Scalper_Pro/Tests/CheckSources.mjs",
+    "sources": 39,
+    "inputs": 104,
+    "types": 50,
+    "expression_cases_passed": 33,
+    "palette_literal_definitions": 10,
+    "reported_default_argument_sites": 5,
+    "native_recompile": "PENDING"
+  }
+}

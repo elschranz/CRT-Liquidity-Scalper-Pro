@@ -1,0 +1,89 @@
+{
+  "kind": "Extracted MQL expressions executed as JavaScript; not native MQL compilation/runtime",
+  "cases": [
+    {
+      "name": "no drawdown",
+      "actual": 0,
+      "expected": 0,
+      "pass": true
+    },
+    {
+      "name": "daily .75% boundary",
+      "actual": 0.75,
+      "expected": 0.75,
+      "pass": true
+    },
+    {
+      "name": "gain clamps DD",
+      "actual": 0,
+      "expected": 0,
+      "pass": true
+    },
+    {
+      "name": "missing reference fail closed",
+      "actual": 100,
+      "expected": 100,
+      "pass": true
+    },
+    {
+      "name": "daily headroom at start",
+      "actual": 75,
+      "expected": 75,
+      "pass": true
+    },
+    {
+      "name": "daily headroom exhausted",
+      "actual": 0,
+      "expected": 0,
+      "pass": true
+    },
+    {
+      "name": "deposit neutral DD",
+      "actual": 0,
+      "expected": 0,
+      "pass": true
+    },
+    {
+      "name": "withdrawal neutral DD",
+      "actual": 0,
+      "expected": 0,
+      "pass": true
+    },
+    {
+      "name": "total trailing headroom",
+      "actual": 340,
+      "expected": 340,
+      "pass": true
+    },
+    {
+      "name": "news before boundary",
+      "actual": false,
+      "expected": false,
+      "pass": true
+    },
+    {
+      "name": "news starts inclusive",
+      "actual": true,
+      "expected": true,
+      "pass": true
+    },
+    {
+      "name": "news release",
+      "actual": true,
+      "expected": true,
+      "pass": true
+    },
+    {
+      "name": "news ends inclusive",
+      "actual": true,
+      "expected": true,
+      "pass": true
+    },
+    {
+      "name": "news outside end",
+      "actual": false,
+      "expected": false,
+      "pass": true
+    }
+  ]
+}
