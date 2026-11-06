@@ -1,11 +1,6 @@
 #ifndef CRT_NEWS_FILTER_MQH
 #define CRT_NEWS_FILTER_MQH
-input group "NEWS"
-input bool InpNewsFilterEnabled=true;
-input int InpNewsMinutesBefore=15;
-input int InpNewsMinutesAfter=15;
-input bool InpBlockWhenCalendarUnavailable=true;
-input int InpCalendarRefreshSeconds=30;
+#include "../Core/Config.mqh"
 class CNewsFilter
 {
 private:
@@ -41,7 +36,8 @@ public:
    bool Allowed(const datetime server_time,string &reason)
    {
       if(!InpNewsFilterEnabled) { m_status="News filter disabled"; return true; }
-      if(InpNewsMinutesBefore<0 || InpNewsMinutesAfter<0 ||
+      if(InpNewsMinutesBefore<0 || InpNewsMinutesBefore>1440 ||
+         InpNewsMinutesAfter<0 || InpNewsMinutesAfter>1440 ||
          InpCalendarRefreshSeconds<1 || InpCalendarRefreshSeconds>3600)
       { reason="Invalid news-filter inputs"; return false; }
       if(m_checked==0 || server_time<m_checked ||

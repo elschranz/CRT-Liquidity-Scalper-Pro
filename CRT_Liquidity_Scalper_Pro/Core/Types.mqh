@@ -1,5 +1,8 @@
 #ifndef CRT_CORE_TYPES_MQH
 #define CRT_CORE_TYPES_MQH
+enum EBrokerDSTRule { BROKER_DST_NONE=0, BROKER_DST_EU=1, BROKER_DST_US=2 };
+enum ELiquidityMode { CRT_PURE=0, CRT_STRUCTURAL=1, CRT_SESSION=2, CRT_EQUAL_LEVELS=3, CRT_ANY_LIQUIDITY=4 };
+enum ECRTDrawdownModel { CRT_DD_FIXED_BALANCE=0, CRT_DD_TRAILING_BALANCE=1, CRT_DD_FIXED_EQUITY=2, CRT_DD_HIGH_WATER_EQUITY=3 };
 enum EDirection { DIR_SELL=-1, DIR_NONE=0, DIR_BUY=1 };
 enum EEntryMode { ENTRY_AGGRESSIVE, ENTRY_CONFIRMED, ENTRY_BOTH_COMPARE };
 enum ESLMode { SL_M5_ATR, SL_M1_ATR, SL_FIXED };
@@ -33,7 +36,9 @@ struct SStatistics {
 struct SDashboardView {
  string state,reason,session,signal,news;
  double balance,equity,daily_pnl,daily_dd,weekly_dd,total_dd,risk_percent,spread,atr,sl_pips,rr,winrate,net,pf,expectancy_r;
- int trades,losses,closed_trades;
+ int trades,losses,closed_trades,virtual_a_closed,virtual_b_closed;
+ double virtual_a_r,virtual_b_r;
+ bool comparing;
  EEntryMode entry_mode;
  bool paused,entries_enabled,risk_locked;
 };

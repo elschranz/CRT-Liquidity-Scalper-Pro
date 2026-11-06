@@ -1,10 +1,8 @@
 #ifndef CRT_M1_ENTRY_ENGINE_MQH
 #define CRT_M1_ENTRY_ENGINE_MQH
+#include "../Core/Config.mqh"
 #include "AggressiveEntry.mqh"
 #include "ConfirmedEntry.mqh"
-input group "ENTRY M1 - MODE"
-input EEntryMode InpEntryMode=ENTRY_AGGRESSIVE;
-input EEntryMode InpRealComparisonMode=ENTRY_AGGRESSIVE;
 class CM1EntryEngine
 {
 private:
@@ -26,6 +24,8 @@ public:
    bool Evaluate(SSignal &signal,const EEntryMode mode,const MqlTick &tick,STradePlan &plan,string &reason)
    {
       reason="";
+      if((signal.direction!=DIR_BUY && signal.direction!=DIR_SELL) || tick.bid<=0 || tick.ask<tick.bid)
+      { reason="Invalid signal or executable quote"; return false; }
       if(!signal.active || signal.consumed) { reason="Signal inactive or already used"; return false; }
       if(TimeCurrent()>=signal.expires_at) { signal.active=false; reason="Signal expired"; return false; }
       bool invalid=signal.direction==DIR_BUY?tick.bid<signal.extreme:tick.ask>signal.extreme;

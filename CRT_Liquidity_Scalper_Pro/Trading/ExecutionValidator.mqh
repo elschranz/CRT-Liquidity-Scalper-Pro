@@ -4,10 +4,6 @@
 #include "../Core/Types.mqh"
 #include "../Core/Utilities.mqh"
 
-input group "EXECUTION"
-input int InpMaximumQuoteAgeSeconds=10;
-input int InpDeviationPoints=10;
-input bool InpCloseInvalidFill=true;
 
 // Hash is used only for identifiers, never as evidence that a fill occurred.
 uint CRTTradeHash(const string value)
@@ -58,15 +54,19 @@ bool CRTTradePositionOwned(const ulong ticket)
       PositionGetInteger(POSITION_MAGIC)!=(long)InpMagic)return false;
    long identifier=PositionGetInteger(POSITION_IDENTIFIER);
    if(!HistorySelectByPosition(identifier))return false;
-   int n=HistoryDealsTotal();
+   int n=HistoryDealsTotal();bool own_entry=false;
+   if(n<1)return false;
    for(int i=0;i<n;i++)
    {
       ulong deal=HistoryDealGetTicket(i);
       ENUM_DEAL_TYPE type=(ENUM_DEAL_TYPE)HistoryDealGetInteger(deal,DEAL_TYPE);
       if((type==DEAL_TYPE_BUY || type==DEAL_TYPE_SELL) &&
          HistoryDealGetInteger(deal,DEAL_MAGIC)!=(long)InpMagic)return false;
+      ENUM_DEAL_ENTRY entry=(ENUM_DEAL_ENTRY)HistoryDealGetInteger(deal,DEAL_ENTRY);
+      if((type==DEAL_TYPE_BUY || type==DEAL_TYPE_SELL) &&
+         (entry==DEAL_ENTRY_IN || entry==DEAL_ENTRY_INOUT))own_entry=true;
    }
-   return PositionSelectByTicket(ticket);
+   return own_entry && PositionSelectByTicket(ticket);
 }
 bool TradingOwnershipSafe(string &reason)
 {
@@ -118,6 +118,21 @@ public:
          !MQLInfoInteger(MQL_TRADE_ALLOWED) || !AccountInfoInteger(ACCOUNT_TRADE_ALLOWED) ||
          !AccountInfoInteger(ACCOUNT_TRADE_EXPERT)){reason="Trading desconectado o no permitido";return false;}
       if(!TradingOwnershipSafe(reason))return false;
+      // Final independent admission guard: no stacking while another own exposure exists.
+      for(int i=PositionsTotal()-1;i>=0;i--)
+      {
+         ulong own=PositionGetTicket(i);
+         if(own>0 && PositionGetString(POSITION_SYMBOL)==symbol &&
+            PositionGetInteger(POSITION_MAGIC)==(long)InpMagic)
+            {reason="Ya existe una posicion propia";return false;}
+      }
+      for(int i=OrdersTotal()-1;i>=0;i--)
+      {
+         ulong own=OrderGetTicket(i);
+         if(own>0 && OrderGetString(ORDER_SYMBOL)==symbol &&
+            OrderGetInteger(ORDER_MAGIC)==(long)InpMagic)
+            {reason="Ya existe una pendiente propia";return false;}
+      }
       long mode=SymbolInfoInteger(symbol,SYMBOL_TRADE_MODE);
       if(mode==SYMBOL_TRADE_MODE_DISABLED || mode==SYMBOL_TRADE_MODE_CLOSEONLY ||
          (p.direction==DIR_BUY && mode==SYMBOL_TRADE_MODE_SHORTONLY) ||

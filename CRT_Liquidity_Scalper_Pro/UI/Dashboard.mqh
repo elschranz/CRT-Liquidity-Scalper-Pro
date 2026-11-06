@@ -7,11 +7,6 @@
 #include "DashboardEvents.mqh"
 #include "../Risk/PropFirmManager.mqh"
 
-input group "DASHBOARD"
-input bool InpDashboardEnabled=true;
-input int InpDashboardWidth=390;
-input int InpDashboardFontSize=9;
-input bool InpDashboardStartMinimized=false;
 
 class CDashboard
   {
@@ -123,10 +118,16 @@ private:
         }
       else if(m_tab==3)
         {
-         Detail(0,"Cerradas "+IntegerToString(m_view.closed_trades)+" | WR "+
-                   DoubleToString(m_view.winrate,1)+"%");
-         Detail(1,"Neto "+DoubleToString(m_view.net,2)+" | PF "+DoubleToString(m_view.pf,2));
-         Detail(2,"Esperanza "+DoubleToString(m_view.expectancy_r,2)+"R | Solo reales");
+         Detail(0,"Reales "+IntegerToString(m_view.closed_trades)+" | WR "+
+                   DoubleToString(m_view.winrate,1)+"% | Neto "+DoubleToString(m_view.net,2));
+         Detail(1,"PF "+DoubleToString(m_view.pf,2)+" | Esperanza "+
+                   DoubleToString(m_view.expectancy_r,2)+"R");
+         if(m_view.comparing)
+            Detail(2,"A "+IntegerToString(m_view.virtual_a_closed)+"/"+
+                      DoubleToString(m_view.virtual_a_r,2)+"R | B "+
+                      IntegerToString(m_view.virtual_b_closed)+"/"+
+                      DoubleToString(m_view.virtual_b_r,2)+"R (virtual)");
+         else Detail(2,"Solo reales");
         }
       else
         {

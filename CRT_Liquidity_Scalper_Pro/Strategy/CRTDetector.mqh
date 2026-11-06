@@ -1,12 +1,7 @@
 #ifndef CRT_DETECTOR_MQH
 #define CRT_DETECTOR_MQH
+#include "../Core/Config.mqh"
 #include "../Core/Utilities.mqh"
-input group "CRT DETECTION"
-input ENUM_TIMEFRAMES InpCRTTimeframe=PERIOD_M5;
-input double InpMinSweepPips=0.2;
-input double InpMinWickPips=0.3;
-input bool InpRejectDoubleSidedSweep=true;
-input int InpMaxSignalAgeMinutes=15;
 class CCRTDetector
 {
 private:
@@ -20,6 +15,11 @@ public:
    bool Detect(const MqlRates &reference,const MqlRates &manipulation,SSignal &signal,string &reason) const
    {
       reason="";
+      if(reference.time<=0 || manipulation.time-reference.time!=PeriodSeconds(InpCRTTimeframe))
+      { reason="M5 candles are not consecutive"; return false; }
+      if(!MathIsValidNumber(reference.open) || !MathIsValidNumber(reference.high) || !MathIsValidNumber(reference.low) || !MathIsValidNumber(reference.close) ||
+         !MathIsValidNumber(manipulation.open) || !MathIsValidNumber(manipulation.high) || !MathIsValidNumber(manipulation.low) || !MathIsValidNumber(manipulation.close))
+      { reason="Nonfinite M5 data"; return false; }
       if(reference.high<=reference.low || manipulation.high<=manipulation.low ||
          reference.open<reference.low || reference.open>reference.high || reference.close<reference.low || reference.close>reference.high ||
          manipulation.open<manipulation.low || manipulation.open>manipulation.high || manipulation.close<manipulation.low || manipulation.close>manipulation.high)
@@ -54,7 +54,9 @@ public:
       // A terminal restart must never replay a previously processed signal.
       string key=CRTKey("lastCRT");
       if(GlobalVariableCheck(key) && (datetime)GlobalVariableGet(key)>=r[1].time) { m_last=r[1].time; return false; }
-      m_last=r[1].time; GlobalVariableSet(key,(double)m_last); GlobalVariablesFlush();
+      if(GlobalVariableSet(key,(double)r[1].time)==0 || !GlobalVariableCheck(key) || GlobalVariableGet(key)!=(double)r[1].time)
+      { reason="CRT replay guard persistence failed"; return false; }
+      m_last=r[1].time; GlobalVariablesFlush();
       if(r[0].time<r[1].time+PeriodSeconds(InpCRTTimeframe)) { reason="Incomplete M5 close"; return false; }
       if(!Detect(r[2],r[1],signal,reason)) return false;
       if(TimeCurrent()>=signal.expires_at) { signal.active=false; reason="CRT already expired"; return false; }

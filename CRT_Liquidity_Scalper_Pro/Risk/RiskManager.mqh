@@ -1,5 +1,6 @@
 #ifndef CRT_RISK_MANAGER_MQH
 #define CRT_RISK_MANAGER_MQH
+#include "../Core/Config.mqh"
 #include "../Core/Types.mqh"
 #include "../Core/Utilities.mqh"
 #include "DailyLimits.mqh"
@@ -64,7 +65,7 @@ private:
       m_seen_deals=(int)seen; m_first_deal=(datetime)first;
       return m_reference>0 && m_high>=m_reference &&
              m_day_reference>0 && m_week_reference>0 &&
-             m_day>0 && m_week>0 && m_day<=TimeCurrent() &&
+             m_day>0 && m_week>0 && m_day<=CRTNow() &&
              m_week<=m_day && m_locks>=0 && m_locks<=7;
    }
    bool History(const datetime now,const bool full)
@@ -241,7 +242,7 @@ public:
    {
       string reason="";
       if(!m_prop.Valid(reason)) { m_snapshot.reason=reason; return false; }
-      const datetime now=TimeCurrent();
+      const datetime now=CRTNow();
       if(now<=0) { m_snapshot.reason="Trade-server clock unavailable"; return false; }
       const bool marker=GlobalVariableCheck(Key("version"));
       m_loaded=Load();
@@ -280,8 +281,9 @@ public:
       m_snapshot.valid=false; m_snapshot.locked=true;
       if(!m_ready || m_persistence_error)
       { if(m_snapshot.reason=="") m_snapshot.reason="Risk persistence not ready"; return false; }
-      const datetime now=TimeCurrent();
+      const datetime now=CRTNow();
       const datetime day=m_period.DayStart(now),week=m_period.WeekStart(now);
+      if(day<m_day || week<m_week) { m_snapshot.reason="Server reset boundary moved backwards"; return false; }
       const bool rollover=day!=m_day || week!=m_week;
       const bool full=m_dirty || rollover;
       if(full || now<m_history_checked || now-m_history_checked>=1)

@@ -1,12 +1,7 @@
 #ifndef CRT_UI_NOTIFICATIONS_MQH
 #define CRT_UI_NOTIFICATIONS_MQH
-input group "NOTIFICATIONS"
-input bool InpNotifyTerminal=true;
-input bool InpNotifyPush=false;
-input bool InpNotifySound=false;
-input string InpNotificationSound="alert.wav";
-input int InpNotificationDedupeSeconds=60;
 
+#include "../Core/Config.mqh"
 // Bounded in-memory cache avoids repeated tick/timer notifications without unbounded growth.
 // Root supplies event keys containing signal/deal identifiers for execution events.
 class CNotifications

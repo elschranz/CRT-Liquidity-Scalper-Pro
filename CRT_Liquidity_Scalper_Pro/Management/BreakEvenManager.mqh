@@ -1,13 +1,7 @@
 #ifndef CRT_BREAK_EVEN_MANAGER_MQH
 #define CRT_BREAK_EVEN_MANAGER_MQH
+#include "../Core/Config.mqh"
 #include "../Trading/ExecutionValidator.mqh"
-input group "POSITION MANAGEMENT"
-input EManagementMode InpManagementMode=FIXED_ADAPTIVE_TP;
-input double InpBreakEvenTriggerR=3.0;
-input double InpBreakEvenBufferPips=0.1;
-input bool InpPartialsEnabled=false;
-input double InpPartialTriggerR=3.0;
-input double InpPartialPercent=50.0;
 class CBreakEvenManager
 {
 public:

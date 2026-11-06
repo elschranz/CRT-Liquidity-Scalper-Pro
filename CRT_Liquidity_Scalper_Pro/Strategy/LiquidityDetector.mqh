@@ -1,14 +1,9 @@
 #ifndef CRT_LIQUIDITY_DETECTOR_MQH
 #define CRT_LIQUIDITY_DETECTOR_MQH
+#include "../Core/Config.mqh"
 #include "../Core/Utilities.mqh"
 #include "SessionManager.mqh"
-enum ELiquidityMode { CRT_PURE=0, CRT_STRUCTURAL=1, CRT_SESSION=2, CRT_EQUAL_LEVELS=3, CRT_ANY_LIQUIDITY=4 };
-input group "LIQUIDITY"
-input ELiquidityMode InpLiquidityMode=CRT_PURE;
-input int InpLiquidityLookbackBars=576;
-input int InpPivotStrength=2;
-input double InpEqualLevelTolerancePips=0.2;
-input int InpEqualLevelMinimumTouches=2;
+
 struct SLiquidityLevel
 {
    double price;
@@ -16,6 +11,7 @@ struct SLiquidityLevel
    int kind;
    datetime formed,known;
    bool consumed;
+   bool intact;
    string key;
 };
 class CLiquidityDetector
@@ -25,15 +21,15 @@ private:
    MqlRates m_bars[];
    datetime m_cutoff;
    bool m_ready;
+   bool m_persistence_ok;
    CSessionManager m_session;
    string LevelKey(const double price,const datetime formed,const int kind,const bool high) const
    {
       double tick=SymbolInfoDouble(CRTSymbol(),SYMBOL_TRADE_TICK_SIZE);
       return CRTKey("L"+IntegerToString((long)formed)+"."+IntegerToString(kind)+(high?"H":"L")+"."+IntegerToString((long)MathRound(price/tick)));
    }
-   bool Intact(const double price,const bool high,const datetime known) const
+   bool Intact(const double price,const bool high,const datetime known,const double tolerance) const
    {
-      double tolerance=InpEqualLevelTolerancePips*CRTPip(CRTSymbol());
       for(int i=0;i<ArraySize(m_bars);i++)
       {
          if(m_bars[i].time<known) continue;
@@ -43,13 +39,14 @@ private:
    }
    void Add(const double price,const bool high,const int kind,const datetime formed,const datetime known)
    {
-      if(price<=0 || known>m_cutoff || !Intact(price,high,known)) return;
+      if(price<=0 || known>m_cutoff || !Intact(price,high,known,InpEqualLevelTolerancePips*CRTPip(CRTSymbol()))) return;
       string key=LevelKey(price,formed,kind,high);
       if(GlobalVariableCheck(key)) return;
       for(int i=0;i<ArraySize(m_levels);i++) if(m_levels[i].key==key) return;
       int n=ArraySize(m_levels); ArrayResize(m_levels,n+1);
       m_levels[n].price=price; m_levels[n].high=high; m_levels[n].kind=kind;
       m_levels[n].formed=formed; m_levels[n].known=known; m_levels[n].consumed=false; m_levels[n].key=key;
+      m_levels[n].intact=Intact(price,high,known,0);
    }
    void AddSession(const datetime startUTC,const datetime endUTC)
    {
@@ -64,20 +61,20 @@ private:
          if(utc>last) last=utc; count++;
       }
       // No session level from a partial historical window.
-      if(count<2 || first>startUTC || last+300<endUTC) return;
+      if(count!=(int)((endUTC-startUTC)/300) || first>startUTC || last+300<endUTC) return;
       datetime known=m_session.ToServer(endUTC);
       Add(high,true,2,m_session.ToServer(startUTC),known);
       Add(low,false,2,m_session.ToServer(startUTC),known);
    }
 public:
-   CLiquidityDetector():m_cutoff(0),m_ready(false) {}
+   CLiquidityDetector():m_cutoff(0),m_ready(false),m_persistence_ok(true) {}
    bool Valid() const
    {
       return InpLiquidityLookbackBars>=50 && InpLiquidityLookbackBars<=5000 &&
              InpPivotStrength>=1 && InpPivotStrength<=10 && InpEqualLevelTolerancePips>=0 &&
              InpEqualLevelMinimumTouches>=2 && InpEqualLevelMinimumTouches<=10 && m_session.Valid();
    }
-   bool Ready() const { return m_ready; }
+   bool Ready() const { return m_ready && m_persistence_ok; }
    void Refresh(const datetime cutoff)
    {
       if(cutoff==m_cutoff && m_ready) return;
@@ -102,15 +99,25 @@ public:
          if(high) Add(m_bars[i].high,true,1,m_bars[i].time,known);
          if(low) Add(m_bars[i].low,false,1,m_bars[i].time,known);
       }
+      // Recent closed range extremes are known levels even when not yet pivots.
+      int first=(int)MathMax(0,n-12); double recentHigh=-DBL_MAX,recentLow=DBL_MAX;
+      datetime highAt=0,lowAt=0;
+      for(int i=first;i<n;i++)
+      {
+         if(m_bars[i].high>recentHigh) { recentHigh=m_bars[i].high; highAt=m_bars[i].time; }
+         if(m_bars[i].low<recentLow) { recentLow=m_bars[i].low; lowAt=m_bars[i].time; }
+      }
+      Add(recentHigh,true,4,highAt,cutoff); Add(recentLow,false,4,lowAt,cutoff);
       // Equal levels require separated, independently confirmed pivot contacts.
       int structural=ArraySize(m_levels); double tol=InpEqualLevelTolerancePips*CRTPip(CRTSymbol());
       for(int i=0;i<structural;i++)
       {
+         if(m_levels[i].kind!=1) continue;
          int contacts=1; datetime known=m_levels[i].known;
          double price=m_levels[i].price;
          for(int j=i+1;j<structural;j++)
          {
-            if(m_levels[i].high!=m_levels[j].high || MathAbs(m_levels[j].price-price)>tol) continue;
+            if(m_levels[j].kind!=1 || m_levels[i].high!=m_levels[j].high || MathAbs(m_levels[j].price-price)>tol) continue;
             if(MathAbs((double)(m_levels[i].formed-m_levels[j].formed))<(2*strength+1)*300) continue;
             contacts++; known=(datetime)MathMax((double)known,(double)m_levels[j].known);
             price=m_levels[i].high?MathMax(price,m_levels[j].price):MathMin(price,m_levels[j].price);
@@ -142,13 +149,14 @@ public:
    }
    bool Qualifies(const SSignal &signal,string &reason) const
    {
+      if(!m_persistence_ok) { reason="Consumed liquidity persistence failed"; return false; }
       if(InpLiquidityMode==CRT_PURE) return true;
       if(!m_ready) { reason="Confirmed liquidity history unavailable"; return false; }
       double tol=InpEqualLevelTolerancePips*CRTPip(CRTSymbol());
       for(int i=0;i<ArraySize(m_levels);i++)
       {
-         if(m_levels[i].consumed || m_levels[i].known>signal.reference_time) continue;
-         bool kind=InpLiquidityMode==CRT_ANY_LIQUIDITY || (InpLiquidityMode==CRT_STRUCTURAL && m_levels[i].kind==1) ||
+         if(m_levels[i].consumed || !m_levels[i].intact || m_levels[i].known>signal.reference_time) continue;
+         bool kind=InpLiquidityMode==CRT_ANY_LIQUIDITY || (InpLiquidityMode==CRT_STRUCTURAL && (m_levels[i].kind==1 || m_levels[i].kind==4)) ||
                    (InpLiquidityMode==CRT_SESSION && m_levels[i].kind==2) || (InpLiquidityMode==CRT_EQUAL_LEVELS && m_levels[i].kind==3);
          if(!kind) continue;
          double level=m_levels[i].price;
@@ -161,12 +169,13 @@ public:
    }
    bool NextTarget(const SSignal &signal,const double entry,double &target)
    {
-      target=0; if(!m_ready) return false;
+      target=0; if(!Ready()) return false;
       MqlTick tick; if(!SymbolInfoTick(CRTSymbol(),tick)) return false;
       Invalidate(tick);
+      if(!Ready()) return false;
       for(int i=0;i<ArraySize(m_levels);i++)
       {
-         if(m_levels[i].consumed || m_levels[i].known>signal.reference_time || GlobalVariableCheck(m_levels[i].key)) continue;
+         if(m_levels[i].consumed || !m_levels[i].intact || m_levels[i].known>signal.reference_time || GlobalVariableCheck(m_levels[i].key)) continue;
          double level=m_levels[i].price;
          if(signal.direction==DIR_BUY)
          {
@@ -190,7 +199,7 @@ public:
          bool reached=m_levels[i].high?tick.bid>=m_levels[i].price:tick.ask<=m_levels[i].price;
          if(!reached) continue;
          m_levels[i].consumed=true; changed=true;
-         GlobalVariableSet(m_levels[i].key,(double)TimeCurrent());
+         if(GlobalVariableSet(m_levels[i].key,(double)TimeCurrent())==0) m_persistence_ok=false;
       }
       if(changed) GlobalVariablesFlush();
    }
@@ -206,7 +215,7 @@ public:
          if(swept)
          {
             m_levels[i].consumed=true;
-            GlobalVariableSet(m_levels[i].key,(double)signal.confirmed_at);
+            if(GlobalVariableSet(m_levels[i].key,(double)signal.confirmed_at)==0) m_persistence_ok=false;
          }
       }
       GlobalVariablesFlush();

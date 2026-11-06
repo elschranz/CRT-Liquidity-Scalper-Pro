@@ -1,5 +1,6 @@
 #ifndef CRT_ORDER_MANAGER_MQH
 #define CRT_ORDER_MANAGER_MQH
+#include "../Core/Config.mqh"
 #include <Trade/Trade.mqh>
 #include "ExecutionValidator.mqh"
 class COrderManager

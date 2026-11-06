@@ -1,5 +1,6 @@
 #ifndef CRT_POSITION_MANAGER_MQH
 #define CRT_POSITION_MANAGER_MQH
+#include "../Core/Config.mqh"
 #include <Trade/Trade.mqh>
 #include "ExecutionValidator.mqh"
 #include "../Management/BreakEvenManager.mqh"
@@ -60,6 +61,17 @@ public:
       m_trade.SetExpertMagicNumber(InpMagic);m_trade.SetAsyncMode(false);
       m_trade.SetDeviationInPoints(InpDeviationPoints);m_trade.SetTypeFillingBySymbol(CRTSymbol());
       m_last_trail_bar=0;
+   }
+   bool Valid() const
+   {
+      return InpMaximumQuoteAgeSeconds>0 && InpDeviationPoints>=0 &&
+             (InpManagementMode==FIXED_ADAPTIVE_TP || InpManagementMode==DELAYED_BREAK_EVEN ||
+              InpManagementMode==STRUCTURE_TRAILING_M1) &&
+             InpBreakEvenTriggerR>0 && InpBreakEvenBufferPips>=0 && InpPartialTriggerR>0 &&
+             InpPartialPercent>0 && InpPartialPercent<100 && InpTrailingPivotStrength>=1 &&
+             InpTrailingLookbackBars>=InpTrailingPivotStrength*2+1 &&
+             InpTrailingLookbackBars<=2000 && InpTrailingStartR>=0 &&
+             InpTrailingBufferPips>=0 && InpTrailingATRMultiplier>=0;
    }
    int Count()
    {

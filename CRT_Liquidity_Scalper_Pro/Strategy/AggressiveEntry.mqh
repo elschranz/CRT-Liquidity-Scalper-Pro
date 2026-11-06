@@ -1,9 +1,7 @@
 #ifndef CRT_AGGRESSIVE_ENTRY_MQH
 #define CRT_AGGRESSIVE_ENTRY_MQH
+#include "../Core/Config.mqh"
 #include "../Core/Utilities.mqh"
-input group "ENTRY M1 - AGGRESSIVE"
-input double InpEntryOffsetPips=0.1;
-input int InpPendingExpirationMinutes=15;
 class CAggressiveEntry
 {
 public:

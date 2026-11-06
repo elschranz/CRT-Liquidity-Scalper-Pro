@@ -5,11 +5,6 @@
 #include "../Core/Utilities.mqh"
 #include "DashboardTheme.mqh"
 
-input group "CHART LEVELS"
-input bool InpChartLevelsEnabled=true;
-input bool InpChartKeepSignalHistory=false;
-input int InpChartMaximumSignals=12;
-input double InpChartRetestAreaPips=0.10;
 
 class CChartVisualizer
   {

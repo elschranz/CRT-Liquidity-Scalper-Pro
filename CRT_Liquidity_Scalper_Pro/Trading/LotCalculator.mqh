@@ -1,5 +1,6 @@
 #ifndef CRT_LOT_CALCULATOR_MQH
 #define CRT_LOT_CALCULATOR_MQH
+#include "../Core/Config.mqh"
 #include "ExecutionValidator.mqh"
 class CLotCalculator
 {

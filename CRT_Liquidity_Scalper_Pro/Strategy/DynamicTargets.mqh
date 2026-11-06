@@ -1,21 +1,7 @@
 #ifndef CRT_DYNAMIC_TARGETS_MQH
 #define CRT_DYNAMIC_TARGETS_MQH
+#include "../Core/Config.mqh"
 #include "LiquidityDetector.mqh"
-input group "ATR & STOP"
-input ESLMode InpSLMode=SL_M5_ATR;
-input double InpATRMultiplier=0.45;
-input double InpMinimumSLPips=0.7;
-input double InpMaximumSLPips=3.0;
-input double InpStructuralBufferPips=0.2;
-input double InpFixedSLPips=1.5;
-input group "DYNAMIC TP/RR"
-input bool InpDynamicTPEnabled=true;
-input double InpMinimumRR=3;
-input double InpMaximumRR=9;
-input double InpLiquidityTargetMarginPercent=10;
-input bool InpAllowFallbackTarget=false;
-input double InpFallbackFixedRR=3;
-input double InpFixedRR=3;
 class CDynamicTargets
 {
 private:
@@ -37,8 +23,10 @@ private:
       { reason="OrderCalcProfit unavailable for cost validation"; return false; }
       double cost=MathMax(0,InpCommissionPerLot)+MathAbs(slip);
       double risk=MathAbs(loss)+cost,reward=profit-cost;
-      if(risk<=0 || reward<=0 || reward/risk+1e-8<InpMinimumRR)
-      { reason="Net RR after estimated commission/slippage below minimum"; return false; }
+      // MinimumRR refers to the specified price-distance ladder. Costs must not
+      // make its expected target payoff negative; monetary risk includes costs.
+      if(risk<=0 || reward<=0)
+      { reason="Estimated commission/slippage consumes target reward"; return false; }
       return true;
    }
    bool Target(STradePlan &plan,string &reason) const
@@ -88,6 +76,7 @@ public:
    bool Build(const SSignal &signal,STradePlan &plan,CLiquidityDetector &liquidity,string &reason)
    {
       reason="";
+      if(!liquidity.Ready()) { reason="Liquidity history/persistence unavailable"; return false; }
       double pip=CRTPip(CRTSymbol()),extreme=signal.extreme;
       if(pip<=0 || plan.entry<=0 || signal.atr_pips<=0) { reason="Stop input data unavailable"; return false; }
       if(InpSLMode==SL_M1_ATR)
@@ -108,11 +97,12 @@ public:
       }
       if(distance/pip>InpMaximumSLPips+1e-7) { reason="Required structural/ATR stop exceeds maximum"; return false; }
       plan.sl=TickPrice(plan.entry-(int)plan.direction*distance,plan.direction==DIR_SELL);
-      if((plan.direction==DIR_BUY && plan.sl>structural) || (plan.direction==DIR_SELL && plan.sl<structural))
+      if((plan.direction==DIR_BUY && plan.sl>structural+1e-10) || (plan.direction==DIR_SELL && plan.sl<structural-1e-10))
       { reason="Rounded stop violates structure"; return false; }
       plan.target_level=0;
       if(InpDynamicTPEnabled && !liquidity.NextTarget(signal,plan.entry,plan.target_level) && !InpAllowFallbackTarget)
       { reason="No valid preexisting target; fallback disabled"; return false; }
+      if(!liquidity.Ready()) { reason="Liquidity persistence failed during target validation"; return false; }
       return Target(plan,reason);
    }
    bool Reprice(STradePlan &plan,const double actualEntry,string &reason) const

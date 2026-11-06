@@ -1,12 +1,7 @@
 #ifndef CRT_CONFIRMED_ENTRY_MQH
 #define CRT_CONFIRMED_ENTRY_MQH
+#include "../Core/Config.mqh"
 #include "../Core/Utilities.mqh"
-input group "ENTRY M1 - CONFIRMED"
-input double InpMinRejectionWickPips=0.2;
-input double InpMinM1CloseBeyondLevelPips=0.1;
-input double InpMaximumChaseDistancePips=1.0;
-input double InpRetestAreaPips=0.1;
-input int InpConfirmationExpirationMinutes=15;
 class CConfirmedEntry
 {
 public:

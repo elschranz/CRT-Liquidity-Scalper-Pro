@@ -1,5 +1,6 @@
 #ifndef CRT_DRAWDOWN_MANAGER_MQH
 #define CRT_DRAWDOWN_MANAGER_MQH
+#include "../Core/Config.mqh"
 #include "PropFirmManager.mqh"
 class CDrawdownManager
 {

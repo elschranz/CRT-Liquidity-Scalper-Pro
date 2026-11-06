@@ -1,8 +1,7 @@
 #ifndef CRT_SPREAD_FILTER_MQH
 #define CRT_SPREAD_FILTER_MQH
+#include "../Core/Config.mqh"
 #include "../Core/Utilities.mqh"
-input group "SPREAD"
-input double InpMaximumSpreadPips=0.3;
 class CSpreadFilter
 {
 public:

@@ -1,20 +1,7 @@
 #ifndef CRT_SESSION_MANAGER_MQH
 #define CRT_SESSION_MANAGER_MQH
 #include "../Core/Config.mqh"
-enum EBrokerDSTRule { BROKER_DST_NONE=0, BROKER_DST_EU=1, BROKER_DST_US=2 };
-input group "HOURS"
-input int InpBrokerUTCWinterHours=2;
-input int InpBrokerUTCSummerHours=3;
-input EBrokerDSTRule InpBrokerDSTRule=BROKER_DST_EU;
-input bool InpLondonEnabled=true;
-input bool InpNewYorkEnabled=true;
-input bool InpOverlapOnly=false;
-input int InpLondonOpenHour=8;
-input int InpLondonCloseHour=17;
-input int InpNewYorkOpenHour=8;
-input int InpNewYorkCloseHour=17;
-input int InpAsiaUTCOpenHour=0;
-input int InpAsiaUTCCloseHour=8;
+
 class CSessionManager
 {
 private:

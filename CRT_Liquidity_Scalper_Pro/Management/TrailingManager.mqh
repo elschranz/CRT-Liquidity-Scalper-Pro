@@ -1,12 +1,7 @@
 #ifndef CRT_TRAILING_MANAGER_MQH
 #define CRT_TRAILING_MANAGER_MQH
+#include "../Core/Config.mqh"
 #include "../Trading/ExecutionValidator.mqh"
-input group "STRUCTURE TRAILING M1"
-input int InpTrailingPivotStrength=2;
-input int InpTrailingLookbackBars=40;
-input double InpTrailingStartR=3.0;
-input double InpTrailingBufferPips=0.1;
-input double InpTrailingATRMultiplier=0.0;
 class CTrailingManager
 {
 public:

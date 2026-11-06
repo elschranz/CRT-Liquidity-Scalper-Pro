@@ -1,5 +1,6 @@
 #ifndef CRT_DAILY_LIMITS_MQH
 #define CRT_DAILY_LIMITS_MQH
+#include "../Core/Config.mqh"
 #include "PropFirmManager.mqh"
 class CDailyLimits
 {

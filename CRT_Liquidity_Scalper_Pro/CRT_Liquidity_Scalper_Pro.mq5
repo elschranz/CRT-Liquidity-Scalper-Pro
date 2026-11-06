@@ -56,7 +56,7 @@ CNotifications g_notifications;
 SSignal g_signal,g_compare_a,g_compare_b;
 STradePlan g_plan;
 EEntryMode g_mode=ENTRY_AGGRESSIVE,g_real_mode=ENTRY_AGGRESSIVE;
-bool g_ready=false,g_reconciling=false,g_storage_ok=true;
+bool g_ready=false,g_reconciling=false,g_storage_ok=true,g_atr_ready=false;
 string g_last_reason="",g_gate_reason="";
 datetime g_last_ui=0;
 
@@ -81,6 +81,7 @@ void CancelPending(const string reason) {
 }
 bool BaseGates(const MqlTick &tick,string &reason) {
  if(!g_storage_ok) { reason="Persistence unavailable; entries blocked"; return false; }
+ if(!g_atr_ready) { reason="Closed M5 ATR unavailable"; return false; }
  SRiskSnapshot risk=g_risk.Snapshot();
  if(!risk.valid || risk.locked) { reason=risk.reason; return false; }
  if(g_state.Paused()) { reason="Paused by user"; return false; }
@@ -90,13 +91,14 @@ bool BaseGates(const MqlTick &tick,string &reason) {
     !AccountInfoInteger(ACCOUNT_TRADE_ALLOWED) || !AccountInfoInteger(ACCOUNT_TRADE_EXPERT)) {
   reason="Trading permission disabled"; return false;
  }
- if(tick.time<=0 || TimeCurrent()-tick.time>10) { reason="Stale execution tick"; return false; }
+ if(tick.time<=0 || CRTNow()-tick.time>10) { reason="Stale execution tick"; return false; }
  if(!g_spread.Allowed(tick,reason) || !g_volatility.Allowed(g_atr.Pips(),reason) ||
-    !g_hours.Allowed(TimeCurrent(),reason) || !g_news.Allowed(TimeCurrent(),reason)) return false;
+    !g_hours.Allowed(CRTNow(),reason) || !g_news.Allowed(CRTNow(),reason)) return false;
  return true;
 }
 void Protect(const MqlTick &tick) {
  g_risk.Refresh();
+ g_executor.ProcessSafety();
  g_orders.Maintain(g_signal);
  g_positions.Manage(g_atr.Pips());
  SRiskSnapshot r=g_risk.Snapshot();
@@ -115,8 +117,8 @@ void Protect(const MqlTick &tick) {
    }
   } else if(g_state.Paused() || !g_state.Entries()) g_state.Set(PAUSED,reason);
  }
- if(g_positions.Count()>0) g_state.Set(POSITION_OPEN,"Managing owned position");
- else if(g_orders.Count()>0) g_state.Set(ORDER_PENDING,"Broker pending order");
+ if(r.valid && !r.locked && g_positions.Count()>0) g_state.Set(POSITION_OPEN,"Managing owned position");
+ else if(r.valid && !r.locked && g_orders.Count()>0) g_state.Set(ORDER_PENDING,"Broker pending order");
  else if(allowed && !g_signal.active) g_state.Set(IDLE,g_last_reason);
 }
 void PollCRT(const MqlTick &tick) {
@@ -149,7 +151,7 @@ void PollCRT(const MqlTick &tick) {
 }
 bool SignalValid(SSignal &signal,const MqlTick &tick,string &reason) {
  if(!signal.active || signal.consumed) return false;
- if(TimeCurrent()>=signal.expires_at) { reason="Signal expired"; return false; }
+ if(CRTNow()>=signal.expires_at) { reason="Signal expired"; return false; }
  if((signal.direction==DIR_BUY && tick.bid<signal.extreme) ||
     (signal.direction==DIR_SELL && tick.ask>signal.extreme)) {
   reason="Manipulation extreme broken before entry"; return false;
@@ -160,14 +162,14 @@ void CompareMode(SSignal &signal,CM1EntryEngine &engine,EEntryMode mode,const Mq
  if(!signal.active || signal.consumed) return;
  string reason="";
  if(g_state.Paused() || !g_state.Entries() || !g_spread.Allowed(tick,reason) ||
-    !g_volatility.Allowed(g_atr.Pips(),reason) || !g_hours.Allowed(TimeCurrent(),reason) ||
-    !g_news.Allowed(TimeCurrent(),reason)) return;
- if(!SignalValid(signal,tick,reason)) { signal.active=false; return; }
+    !g_volatility.Allowed(g_atr.Pips(),reason) || !g_hours.Allowed(CRTNow(),reason) ||
+    !g_news.Allowed(CRTNow(),reason)) return;
+ if(!SignalValid(signal,tick,reason)) { signal.active=false; g_comparison.Reject(signal,mode,reason); return; }
  STradePlan candidate; ZeroMemory(candidate);
  if(!engine.Evaluate(signal,mode,tick,candidate,reason)) return;
  signal.consumed=true;
  if(!g_targets.Build(signal,candidate,g_liquidity,reason)) {
-  g_journal.Plan(signal,candidate,"VIRTUAL_REJECT",reason); return;
+  g_comparison.Reject(signal,mode,reason); return;
  }
  // Virtual trades have their own price/R ledger; never call Submit or reserve real money.
  g_comparison.OnPlan(signal,candidate);
@@ -229,15 +231,18 @@ void Render() {
  SStatistics stats=g_statistics.Snapshot();
  MqlTick tick; ZeroMemory(tick); CRTTick(CRTSymbol(),tick);
  v.state=g_state.Name();
- if(g_gate_reason!="" && StringFind(g_gate_reason,"news")>=0) v.state="NEWS BLOCK";
+ if(StringFind(g_gate_reason,"NEWS")>=0 || StringFind(g_gate_reason,"news")>=0) v.state="NEWS BLOCK";
  v.reason=g_gate_reason!="" ? g_gate_reason:g_last_reason;
- v.session=g_sessions.Name(TimeCurrent()); v.signal=g_signal.id; v.news=g_news.Status();
+ v.session=g_sessions.Name(CRTNow()); v.signal=g_signal.id; v.news=g_news.Status();
  v.balance=AccountInfoDouble(ACCOUNT_BALANCE); v.equity=AccountInfoDouble(ACCOUNT_EQUITY);
  v.daily_pnl=r.daily_pnl; v.daily_dd=r.daily_dd; v.weekly_dd=r.weekly_dd; v.total_dd=r.total_dd;
  v.risk_percent=g_state.Risk(); v.spread=CRTPips(CRTSymbol(),tick.ask-tick.bid); v.atr=g_atr.Pips();
  v.sl_pips=g_plan.entry>0 ? CRTPips(CRTSymbol(),MathAbs(g_plan.entry-g_plan.sl)):0; v.rr=g_plan.rr;
  v.trades=r.trades_today; v.losses=r.losses; v.entry_mode=g_mode==ENTRY_BOTH_COMPARE ? g_real_mode:g_mode;
  v.paused=g_state.Paused(); v.entries_enabled=g_state.Entries(); v.risk_locked=r.locked || !r.valid || !g_storage_ok;
+ v.comparing=g_mode==ENTRY_BOTH_COMPARE;
+ v.virtual_a_closed=g_comparison.Closed(ENTRY_AGGRESSIVE); v.virtual_b_closed=g_comparison.Closed(ENTRY_CONFIRMED);
+ v.virtual_a_r=g_comparison.NetR(ENTRY_AGGRESSIVE); v.virtual_b_r=g_comparison.NetR(ENTRY_CONFIRMED);
  v.winrate=stats.winrate; v.net=stats.net; v.pf=stats.pf; v.expectancy_r=stats.expectancy_r; v.closed_trades=stats.trades;
  g_dashboard.Update(v);
 }
@@ -247,16 +252,18 @@ int OnInit() {
  ZeroMemory(g_signal); ZeroMemory(g_plan); ZeroMemory(g_compare_a); ZeroMemory(g_compare_b);
  g_mode=InpEntryMode; g_real_mode=InpRealComparisonMode;
  if(g_real_mode==ENTRY_BOTH_COMPARE) { Print("Comparison real mode must be aggressive or confirmed"); return INIT_PARAMETERS_INCORRECT; }
+ if(!g_crt.Valid() || !g_entry.Valid() || !g_liquidity.Valid() || !g_targets.Valid() ||
+    !g_sessions.Valid() || !g_positions.Valid()) { Print("Invalid strategy/management parameters"); return INIT_PARAMETERS_INCORRECT; }
  g_storage_ok=g_state.Init();
  if(!g_atr.Init()) { Print("ATR handle unavailable"); return INIT_FAILED; }
- g_atr.Refresh();
+ g_atr_ready=g_atr.Refresh();
  if(!g_executor.Init()) { Print("Trade executor initialization failed"); return INIT_FAILED; }
  if(!g_journal.Init()) { Print("Journal unavailable; refusing entries"); return INIT_FAILED; }
  bool recovered=g_state.LoadSignal(g_signal);
  if(recovered) {
   // Recover exposure management, never resume an unsubmitted setup after a restart.
   g_signal.consumed=true;
-  g_signal.active=TimeCurrent()<g_signal.expires_at;
+  g_signal.active=CRTNow()<g_signal.expires_at;
   g_state.SaveSignal(g_signal);
  }
  g_executor.Reconcile(); g_positions.Reconcile(); g_positions.Recover(g_plan);
@@ -274,22 +281,23 @@ void OnTick() {
  if(!g_ready) return;
  MqlTick tick; ZeroMemory(tick);
  if(!CRTTick(CRTSymbol(),tick)) return;
- g_atr.Refresh();
+ g_atr_ready=g_atr.Refresh();
  g_liquidity.Invalidate(tick);
  Protect(tick);
  g_journal.Tick(tick);
  PollCRT(tick);
  EvaluateEntry(tick);
- if(g_signal.active && TimeCurrent()>=g_signal.expires_at && g_orders.Count()==0) {
+ if(g_signal.active && CRTNow()>=g_signal.expires_at && g_orders.Count()==0) {
   g_signal.active=false; g_state.SaveSignal(g_signal);
  }
 }
 void OnTimer() {
  if(!g_ready) return;
  MqlTick tick; ZeroMemory(tick); CRTTick(CRTSymbol(),tick);
+ g_atr_ready=g_atr.Refresh();
  Protect(tick);
  g_statistics.Refresh();
- g_visuals.ClearExpired(TimeCurrent());
+ g_visuals.ClearExpired(CRTNow());
  Render();
 }
 void OnChartEvent(const int id,const long &lparam,const double &dparam,const string &sparam) {
@@ -322,7 +330,7 @@ void OnChartEvent(const int id,const long &lparam,const double &dparam,const str
 }
 void OnTradeTransaction(const MqlTradeTransaction &transaction,const MqlTradeRequest &request,const MqlTradeResult &result) {
  if(!g_ready) return;
- g_executor.Reconcile(); g_positions.Reconcile(); g_risk.Invalidate();
+ g_executor.Reconcile(); g_positions.Reconcile(); g_risk.Invalidate(); g_statistics.Invalidate();
  g_journal.Transaction(transaction,request,result);
  if(g_reconciling || transaction.type!=TRADE_TRANSACTION_DEAL_ADD || transaction.deal==0) return;
  if(!HistoryDealSelect(transaction.deal)) return;
@@ -340,7 +348,8 @@ void OnTradeTransaction(const MqlTradeTransaction &transaction,const MqlTradeReq
   g_reconciling=false;
   g_notifications.Send("fill."+IntegerToString((long)transaction.deal),"Owned fill reconciled");
  } else {
-  g_notifications.Send("close."+IntegerToString((long)transaction.deal),"Owned exit reconciled");
+  string exit_reason=EnumToString((ENUM_DEAL_REASON)HistoryDealGetInteger(transaction.deal,DEAL_REASON));
+  g_notifications.Send("close."+IntegerToString((long)transaction.deal),"Owned exit "+exit_reason);
  }
  g_risk.Refresh(); g_statistics.Refresh();
 }
@@ -349,6 +358,6 @@ void OnDeinit(const int reason) {
  EventKillTimer();
  // Broker-enforced pending expiration remains authoritative if terminal is offline.
  if(g_ready) { CancelPending("EA deinitialization"); g_state.SaveSignal(g_signal); g_risk.Save(); g_state.Save(); }
- g_journal.Close(); g_dashboard.Destroy(); g_visuals.Destroy(); g_atr.Release();
+ g_comparison.Close(); g_journal.Close(); g_dashboard.Destroy(); g_visuals.Destroy(); g_atr.Release();
  g_ready=false;
 }

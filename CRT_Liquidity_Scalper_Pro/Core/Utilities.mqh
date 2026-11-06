@@ -1,6 +1,12 @@
 #ifndef CRT_CORE_UTILITIES_MQH
 #define CRT_CORE_UTILITIES_MQH
 #include "Config.mqh"
+datetime CRTNow() {
+ datetime current=TimeCurrent();
+ if(MQLInfoInteger(MQL_TESTER)) return current;
+ datetime server=TimeTradeServer();
+ return server>0 ? server:current;
+}
 double CRTPip(const string symbol) {
  const int digits=(int)SymbolInfoInteger(symbol,SYMBOL_DIGITS);
  const double point=SymbolInfoDouble(symbol,SYMBOL_POINT);
@@ -29,10 +35,11 @@ uint CRTHash(const string value) {
 string CRTKey(const string suffix) {
  static uint tester_nonce=0;
  if(MQLInfoInteger(MQL_TESTER) && tester_nonce==0) tester_nonce=(uint)(GetTickCount()^(uint)GetMicrosecondCount()^(uint)ChartID())+1;
- string context=AccountInfoString(ACCOUNT_SERVER)+"|"+CRTSymbol()+"|"+IntegerToString((long)InpMagic);
+ string context=IntegerToString(AccountInfoInteger(ACCOUNT_LOGIN))+"|"+AccountInfoString(ACCOUNT_SERVER)+"|"+CRTSymbol()+"|"+IntegerToString((long)InpMagic);
  if(MQLInfoInteger(MQL_TESTER)) context+="|run="+IntegerToString((long)tester_nonce);
- string key="CRT"+IntegerToString(AccountInfoInteger(ACCOUNT_LOGIN))+"_"+IntegerToString((long)CRTHash(context))+"_";
+ string key="CRT"+IntegerToString((long)CRTHash(context))+"_"+IntegerToString((long)CRTHash(context+"|guard"))+"_";
  if(MQLInfoInteger(MQL_TESTER)) key+="T_";
+ if(StringLen(key+suffix)>63) return key+"H"+IntegerToString((long)CRTHash(suffix));
  return key+suffix;
 }
 bool CRTSetGlobal(const string suffix,const double value) {

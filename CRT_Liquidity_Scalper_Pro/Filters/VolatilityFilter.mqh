@@ -1,8 +1,6 @@
 #ifndef CRT_VOLATILITY_FILTER_MQH
 #define CRT_VOLATILITY_FILTER_MQH
-input group "VOLATILITY"
-input double InpMinimumATRPips=0.2;
-input double InpMaximumATRPips=20.0;
+#include "../Core/Config.mqh"
 class CVolatilityFilter
 {
 public:

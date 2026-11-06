@@ -1,8 +1,7 @@
 #ifndef CRT_ATR_MANAGER_MQH
 #define CRT_ATR_MANAGER_MQH
+#include "../Core/Config.mqh"
 #include "../Core/Utilities.mqh"
-input group "ATR"
-input int InpATRPeriod=14;
 class CATRManager
 {
 private:
