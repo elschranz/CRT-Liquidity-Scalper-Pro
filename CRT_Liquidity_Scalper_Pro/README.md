@@ -2,7 +2,7 @@
 
 Expert Advisor modular en MQL5 nativo para EURUSD: CRT sobre dos velas M5 cerradas y ejecución refinada en M1. Incluye entradas Limit agresivas o confirmación M1, riesgo persistente, dashboard y journal.
 
-**Estado: implementación y revisión estática realizadas; compilación MetaEditor y ejecución MT5 pendientes.** No se entrega un EX5 ni se atribuyen resultados de rentabilidad. Los valores iniciales son hipótesis de trabajo.
+**Estado: implementación y revisión estática realizadas. Corregidos los cinco errores de constantes comunicados por MetaEditor; recompilación nativa posterior y ejecución MT5 pendientes.** No se entrega un EX5 ni se atribuyen resultados de rentabilidad. Los valores iniciales son hipótesis de trabajo.
 
 ## Instalación y compilación
 

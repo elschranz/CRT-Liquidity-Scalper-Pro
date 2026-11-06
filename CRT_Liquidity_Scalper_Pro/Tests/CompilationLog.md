@@ -34,3 +34,14 @@ Marcar cada caso como aprobado solo al obtener su resultado observado y evidenci
 ## CI ejecutada
 
 [GitHub Actions run 42238852416](https://github.com/elschranz/CRT-Liquidity-Scalper-Pro/actions/runs/42238852416), commit de fuentes `ec1fc22a9eb827a22fb2202af291ae598427465f`: workflow y job `source-checks` completados con `success`; paso `Validate source graph and extracted expressions` correcto. Ejecutó `node CRT_Liquidity_Scalper_Pro/Tests/CheckSources.mjs`: 39 fuentes MQL, 104 inputs, 50 tipos y 33 casos de expresiones. Sigue sin compilación ni ejecución MT5.
+
+## Corrección tras compilación aportada por el usuario
+
+El usuario ejecutó MetaEditor y comunicó **5 errores, 0 advertencias**:
+- DashboardComponents.mqh: 44:32, 54:57, 55:33.
+- Dashboard.mqh: 47:43, 55:65.
+- Diagnóstico común: `constant expected`.
+
+Los cinco argumentos predeterminados usaban CRT_UI_TEXT/CRT_UI_RAISED/CRT_UI_MUTED, declarados como variables globales `const color`. Se reemplazan las diez declaraciones de paleta por macros de literales `C'R,G,B'`, sin cambiar nombres, colores, llamadas ni comportamiento. La fuente de texto permanece `const string` porque no se usa como valor predeterminado.
+
+Comprobación posterior: análisis de fuentes y expresiones mediante Node; auditoría de los cinco usos y conservación exacta de los diez colores. **Recompilación nativa posterior pendiente.** El entorno ya admite terminal y archivos, pero MetaEditor/Wine no están disponibles en PATH. No se afirma una compilación de cero errores.

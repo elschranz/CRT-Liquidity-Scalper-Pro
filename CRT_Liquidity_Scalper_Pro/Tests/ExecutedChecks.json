@@ -1,8 +1,19 @@
 {
   "date": "2026-11-06",
   "native_compilation": {
-    "status": "NOT_RUN",
-    "reason": "Attached execution environment failed to start. MetaEditor inaccessible; no EX5 produced."
+    "status": "USER_REPORTED_5_ERRORS_BEFORE_PALETTE_FIX",
+    "errors": 5,
+    "warnings": 0,
+    "diagnostic": "constant expected",
+    "locations": [
+      "DashboardComponents.mqh:44:32",
+      "DashboardComponents.mqh:54:57",
+      "DashboardComponents.mqh:55:33",
+      "Dashboard.mqh:47:43",
+      "Dashboard.mqh:55:65"
+    ],
+    "fix": "Palette const color variables replaced by literal preprocessor definitions in DashboardTheme.mqh",
+    "native_recompile_after_fix": "NOT_RUN"
   },
   "native_smoke": {
     "status": "NOT_RUN"
@@ -250,5 +261,16 @@
     "command": "node CRT_Liquidity_Scalper_Pro/Tests/CheckSources.mjs",
     "check_step_conclusion": "success",
     "scope": "39 MQL sources,104 inputs,50 types and33 extracted-expression cases. No native MQL compiler or MT5 runtime."
+  },
+  "palette_fix_checks": {
+    "local_node_cli": "SUCCESS",
+    "command": "node CRT_Liquidity_Scalper_Pro/Tests/CheckSources.mjs",
+    "sources": 39,
+    "inputs": 104,
+    "types": 50,
+    "expression_cases_passed": 33,
+    "palette_literal_definitions": 10,
+    "reported_default_argument_sites": 5,
+    "native_recompile": "PENDING"
   }
 }
