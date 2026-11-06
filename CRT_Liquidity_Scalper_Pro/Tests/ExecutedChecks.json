@@ -14,7 +14,7 @@
     "status": "NOT_RUN"
   },
   "javascript_execution": {
-    "runtime": "functions.exec V8; CheckSources exported logic evaluated in memory. Node CLI not run.",
+    "runtime": "functions.exec V8 and GitHub Actions Node CLI. Source structure and extracted-expression checks.",
     "structure": {
       "sources": 39,
       "inputs": 104,
@@ -240,5 +240,15 @@
   "limitations": [
     "Source checks and translated expressions do not validate native MQL types, MT5 APIs, event ordering, graphics, broker execution, economic calendar or profitability.",
     "See CompilationLog.md and TestPlan.md for required native validation."
-  ]
+  ],
+  "github_actions": {
+    "status": "SUCCESS",
+    "run_id": 42238852416,
+    "job_id": 127963537457,
+    "verified_source_commit": "ec1fc22a9eb827a22fb2202af291ae598427465f",
+    "url": "https://github.com/elschranz/CRT-Liquidity-Scalper-Pro/actions/runs/42238852416",
+    "command": "node CRT_Liquidity_Scalper_Pro/Tests/CheckSources.mjs",
+    "check_step_conclusion": "success",
+    "scope": "39 MQL sources,104 inputs,50 types and33 extracted-expression cases. No native MQL compiler or MT5 runtime."
+  }
 }

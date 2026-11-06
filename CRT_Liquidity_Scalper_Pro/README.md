@@ -127,7 +127,7 @@ Disponibles: revisión de código, 39 fuentes MQL con guardas/includes acíclico
 node CRT_Liquidity_Scalper_Pro/Tests/CheckSources.mjs
 ```
 
-Su lógica se ejecutó en JavaScript durante esta entrega; el comando Node no pudo lanzarse porque el entorno no arrancó. No ejecuta APIs ni eventos MT5.
+La lógica pasó en JavaScript y también mediante Node en [GitHub Actions](https://github.com/elschranz/CRT-Liquidity-Scalper-Pro/actions/runs/42238852416). No ejecuta APIs ni eventos MT5. El entorno adjunto siguió sin terminal utilizable; la ejecución Node se realizó en el runner de GitHub.
 
 Pendientes: compilación nativa, renderizado/arrastre del dashboard, API de calendario real, broker netting/hedging, fills parciales, desconexiones/reinicios, DST histórico y backtests M1 con ticks reales, comisiones y spreads reales. Cualquier fallo debe resolverse antes de usar fondos reales. Un SL de 0.7–3 pips es extremadamente sensible a spread, tick size, stops/freeze, comisiones y slippage, y puede ser inejecutable.
 

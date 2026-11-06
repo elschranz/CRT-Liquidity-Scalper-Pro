@@ -16,7 +16,7 @@ No interpretar un análisis de includes o una expresión JavaScript como evidenc
 - Revisión independiente de estrategia, ejecución, riesgo e integración.
 - Análisis léxico y de dependencias de todas las fuentes MQL: guardas, includes relativos, ciclos, delimitadores, tipos e inputs.
 - Ejecución en JavaScript de 14 casos sobre expresiones extraídas de riesgo/noticias y 19 casos sobre cuerpos extraídos de CRT/RR; todos pasan. Transformaciones explícitas en los módulos Tests/*ExpressionChecks.mjs.
-- Registro estructurado en ExecutedChecks.json. CheckSources.mjs permite repetir la lógica con Node estándar. El comando Node CLI no se ejecutó aquí, por falta de terminal.
+- Registro estructurado en ExecutedChecks.json. CheckSources.mjs permite repetir la lógica con Node estándar. El entorno adjunto no tuvo terminal; posteriormente el comando Node CLI se ejecutó correctamente en GitHub Actions.
 
 También se revisaron cálculos de referencia para redondeo de lote y cierres acotados; no validan OrderCalcProfit/OrderCalcMargin/CTrade reales y no se presentan como pruebas nativas.
 
@@ -30,3 +30,7 @@ También se revisaron cálculos de referencia para redondeo de lote y cierres ac
 6. Los perfiles permiten explícitamente calendario ausente para comparación sin noticias históricas. No validan el filtro de noticias ni rentabilidad.
 
 Marcar cada caso como aprobado solo al obtener su resultado observado y evidencia nativa.
+
+## CI ejecutada
+
+[GitHub Actions run 42238852416](https://github.com/elschranz/CRT-Liquidity-Scalper-Pro/actions/runs/42238852416), commit de fuentes `ec1fc22a9eb827a22fb2202af291ae598427465f`: workflow y job `source-checks` completados con `success`; paso `Validate source graph and extracted expressions` correcto. Ejecutó `node CRT_Liquidity_Scalper_Pro/Tests/CheckSources.mjs`: 39 fuentes MQL, 104 inputs, 50 tipos y 33 casos de expresiones. Sigue sin compilación ni ejecución MT5.
